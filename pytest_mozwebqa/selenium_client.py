@@ -7,6 +7,7 @@
 import json
 
 import pytest
+from selenium.webdriver.common.proxy import Proxy
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium import selenium
 from selenium import webdriver
@@ -47,6 +48,7 @@ class Client(object):
         self.default_implicit_wait = 10
         self.sauce_labs_credentials = options.sauce_labs_credentials_file
         self.assume_untrusted = options.assume_untrusted
+        self.proxy = options.proxy
 
     def check_usage(self):
         self.check_basic_usage()
@@ -83,13 +85,16 @@ class Client(object):
             self.selenium.set_context(self.test_id)
 
     def start_webdriver_client(self):
+        if self.proxy:
+            proxy = Proxy()
+            proxy.http_proxy = self.proxy
         if self.driver.upper() == 'REMOTE':
             if self.chrome_options:
                 capabilities = self.create_chrome_options(self.chrome_options).to_capabilities()
             else:
                 capabilities = getattr(webdriver.DesiredCapabilities, self.browser_name.upper())
             if self.browser_name.upper() == 'FIREFOX':
-                profile = self.create_firefox_profile(self.firefox_preferences)
+                profile = self.create_firefox_profile(self.firefox_preferences, proxy)
             else:
                 profile = None
             if self.browser_version:
@@ -123,7 +128,7 @@ class Client(object):
 
         elif self.driver.upper() == 'FIREFOX':
             binary = self.firefox_path and FirefoxBinary(self.firefox_path) or None
-            profile = self.create_firefox_profile(self.firefox_preferences)
+            profile = self.create_firefox_profile(self.firefox_preferences, proxy)
             self.selenium = webdriver.Firefox(
                 firefox_binary=binary,
                 firefox_profile=profile)
@@ -149,8 +154,10 @@ class Client(object):
         else:
             return self.selenium.get_eval('selenium.sessionId')
 
-    def create_firefox_profile(self, preferences):
+    def create_firefox_profile(self, preferences, proxy=None):
         profile = webdriver.FirefoxProfile()
+        if proxy:
+            profile.set_proxy(proxy)
         if preferences:
             [profile.set_preference(k, v) for k, v in json.loads(preferences).items()]
         profile.assume_untrusted_cert_issuer = self.assume_untrusted
