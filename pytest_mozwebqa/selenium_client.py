@@ -88,6 +88,7 @@ class Client(object):
         if self.proxy:
             proxy = Proxy()
             proxy.http_proxy = self.proxy
+            proxy.ssl_proxy = self.proxy
         if self.driver.upper() == 'REMOTE':
             if self.chrome_options:
                 capabilities = self.create_chrome_options(self.chrome_options).to_capabilities()
