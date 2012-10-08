@@ -6,6 +6,7 @@ setup(name='pytest-mozwebqa',
       author='Dave Hunt',
       author_email='dhunt@mozilla.com',
       url='https://github.com/davehunt/pytest-mozwebqa',
+      data_files=[('pytest_mozwebqa/resources', ['resources/style.css', 'resources/main.js', 'resources/jquery.js'])],
       py_modules=[
         'pytest_mozwebqa.pytest_mozwebqa',
         'pytest_mozwebqa.credentials',
