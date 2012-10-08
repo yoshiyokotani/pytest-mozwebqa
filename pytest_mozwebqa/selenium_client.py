@@ -96,12 +96,14 @@ class Client(object):
             else:
                 capabilities = getattr(webdriver.DesiredCapabilities, self.browser_name.upper())
             if self.browser_name.upper() == 'FIREFOX':
-                profile = self.create_firefox_profile(self.firefox_preferences, proxy)
+                profile = self.create_firefox_profile(self.firefox_preferences)
             else:
                 profile = None
             if self.browser_version:
                 capabilities['version'] = self.browser_version
             capabilities['platform'] = self.platform.upper()
+            if proxy:
+                proxy.add_to_capabilities(capabilities)
             if self.capabilities:
                 capabilities.update(json.loads(self.capabilities))
             executor = 'http://%s:%s/wd/hub' % (self.host, self.port)
