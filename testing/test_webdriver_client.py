@@ -37,7 +37,7 @@ def testSpecifyingFirefoxProfile(testdir):
         'user_pref("browser.display.foreground_color", "#FF0000");'
         'user_pref("browser.display.use_document_colors", false);')
     file_test = testdir.makepyfile("""
-        import pytest, time
+        import pytest
         @pytest.mark.nondestructive
         def test_selenium(mozwebqa):
             mozwebqa.selenium.get('http://localhost:8000/')
@@ -68,7 +68,7 @@ def testSpecifyingFirefoxProfileAndOverridingPreferences(testdir):
         'user_pref("browser.display.foreground_color", "#FF0000");'
         'user_pref("browser.display.use_document_colors", false);')
     file_test = testdir.makepyfile("""
-        import pytest, time
+        import pytest
         @pytest.mark.nondestructive
         def test_selenium(mozwebqa):
             mozwebqa.selenium.get('http://localhost:8000/')
@@ -94,7 +94,7 @@ def testAddingFirefoxExtension(testdir):
     path_to_extensions_folder = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'testing')
     extension = os.path.join(path_to_extensions_folder, 'empty.xpi')
     file_test = testdir.makepyfile("""
-        import pytest, time
+        import pytest
         @pytest.mark.nondestructive
         def test_selenium(mozwebqa):
             mozwebqa.selenium.get('about:support')
@@ -105,6 +105,44 @@ def testAddingFirefoxExtension(testdir):
         '--api=webdriver',
         '--driver=firefox',
         '--extension=''%s''' % extension,
+        file_test)
+    passed, skipped, failed = reprec.listoutcomes()
+    assert len(passed) == 1
+
+def testFirefoxProxy(testdir):
+    """Test that a proxy can be set for firefox."""
+    file_test = testdir.makepyfile("""
+        import pytest
+        @pytest.mark.nondestructive
+        def test_selenium(mozwebqa):
+            mozwebqa.selenium.get('http://example.com')
+            header = mozwebqa.selenium.find_element_by_tag_name('h1')
+            assert header.text == 'Success!'
+    """)
+    reprec = testdir.inline_run('--baseurl=http://localhost:8000',
+        '--api=webdriver',
+        '--driver=firefox',
+        '--proxyhost=localhost',
+        '--proxyport=8000',
+        file_test)
+    passed, skipped, failed = reprec.listoutcomes()
+    assert len(passed) == 1
+
+def testChromeProxy(testdir):
+    """Test that a proxy can be set for chrome."""
+    file_test = testdir.makepyfile("""
+        import pytest
+        @pytest.mark.nondestructive
+        def test_selenium(mozwebqa):
+            mozwebqa.selenium.get('http://example.com')
+            header = mozwebqa.selenium.find_element_by_tag_name('h1')
+            assert header.text == 'Success!'
+    """)
+    reprec = testdir.inline_run('--baseurl=http://localhost:8000',
+        '--api=webdriver',
+        '--driver=chrome',
+        '--proxyhost=localhost',
+        '--proxyport=8000',
         file_test)
     passed, skipped, failed = reprec.listoutcomes()
     assert len(passed) == 1
