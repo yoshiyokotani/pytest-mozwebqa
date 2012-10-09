@@ -1,8 +1,14 @@
 Change Log
 ==========
 
+1.1
+---
+
+* Added support for specifying a Firefox profile
+* Added support for specifying Firefox extensions
+
 1.0
-----------------
+---
 
 * First stable release
 * Added support for Opera

@@ -29,9 +29,11 @@ class Client(object):
             self.driver = options.driver
             self.capabilities = options.capabilities
             self.chrome_path = options.chrome_path
-            self.chrome_options = options.chrome_options
+            self.chrome_options = options.chrome_options or '{}'
             self.firefox_path = options.firefox_path
             self.firefox_preferences = options.firefox_preferences
+            self.profile_path = options.profile_path
+            self.extension_paths = options.extension_paths or []
             self.opera_path = options.opera_path
             self.timeout = options.webqatimeout
 
@@ -91,12 +93,17 @@ class Client(object):
             proxy.http_proxy = self.proxy_url
             proxy.ssl_proxy = self.proxy_url
         if self.driver.upper() == 'REMOTE':
-            if self.chrome_options:
-                capabilities = self.create_chrome_options(self.chrome_options).to_capabilities()
+            if self.chrome_options or self.extension_paths:
+                capabilities = self.create_chrome_options(
+                    self.chrome_options,
+                    self.extension_paths).to_capabilities()
             else:
                 capabilities = getattr(webdriver.DesiredCapabilities, self.browser_name.upper())
             if self.browser_name.upper() == 'FIREFOX':
-                profile = self.create_firefox_profile(self.firefox_preferences)
+                profile = self.create_firefox_profile(
+                    self.firefox_preferences,
+                    self.profile_path,
+                    self.extension_paths)
             else:
                 profile = None
             if self.browser_version:
@@ -117,22 +124,30 @@ class Client(object):
 
         elif self.driver.upper() == 'CHROME':
             if self.chrome_path:
-                if self.chrome_options:
-                    options = self.create_chrome_options(self.chrome_options)
+                if self.chrome_options or self.extension_paths:
+                    options = self.create_chrome_options(
+                        self.chrome_options,
+                        self.extension_paths)
                     self.selenium = webdriver.Chrome(executable_path=self.chrome_path,
                                                      chrome_options=options)
                 else:
                     self.selenium = webdriver.Chrome(executable_path=self.chrome_path)
             else:
-                if self.chrome_options:
-                    options = self.create_chrome_options(self.chrome_options)
+                if self.chrome_options or self.extension_paths:
+                    options = self.create_chrome_options(
+                        self.chrome_options,
+                        self.extension_paths)
                     self.selenium = webdriver.Chrome(chrome_options=options)
                 else:
                     self.selenium = webdriver.Chrome()
 
         elif self.driver.upper() == 'FIREFOX':
             binary = self.firefox_path and FirefoxBinary(self.firefox_path) or None
-            profile = self.create_firefox_profile(self.firefox_preferences, proxy)
+            profile = self.create_firefox_profile(
+                self.firefox_preferences,
+                self.profile_path,
+                self.extension_paths,
+                proxy)
             self.selenium = webdriver.Firefox(
                 firefox_binary=binary,
                 firefox_profile=profile)
@@ -158,17 +173,19 @@ class Client(object):
         else:
             return self.selenium.get_eval('selenium.sessionId')
 
-    def create_firefox_profile(self, preferences, proxy=None):
-        profile = webdriver.FirefoxProfile()
-        if proxy:
-            profile.set_proxy(proxy)
+    def create_firefox_profile(self, preferences, profile_path, extensions, proxy=None):
+        profile = webdriver.FirefoxProfile(profile_path)
         if preferences:
             [profile.set_preference(k, v) for k, v in json.loads(preferences).items()]
         profile.assume_untrusted_cert_issuer = self.assume_untrusted
         profile.update_preferences()
+        for extension in extensions:
+            profile.add_extension(extension)
+        if proxy:
+            profile.set_proxy(proxy)
         return profile
 
-    def create_chrome_options(self, preferences):
+    def create_chrome_options(self, preferences, extensions):
         options = webdriver.ChromeOptions()
         options_from_json = json.loads(preferences)
 
@@ -176,12 +193,11 @@ class Client(object):
             for args_ in options_from_json['arguments']:
                 options.add_argument(args_)
 
-        if 'extensions' in options_from_json:
-            for ext_ in options_from_json['extensions']:
-                options.add_extension(ext_)
-
         if 'binary_location' in options_from_json:
             options.binary_location = options_from_json['binary_location']
+
+        for extension in extensions:
+            options.add_extension(extension)
 
         return options
 

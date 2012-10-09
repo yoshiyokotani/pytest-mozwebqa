@@ -12,7 +12,7 @@ import requests
 
 import credentials
 
-__version__ = '1.0'
+__version__ = '1.1'
 
 def pytest_configure(config):
     if not hasattr(config, 'slaveinput'):
@@ -200,6 +200,16 @@ def pytest_addoption(parser):
                      dest='firefox_preferences',
                      metavar='str',
                      help='json string of firefox preferences to set (webdriver).')
+    group._addoption('--profilepath',
+                     action='store',
+                     dest='profile_path',
+                     metavar='str',
+                     help='path to the firefox profile to use (webdriver).')
+    group._addoption('--extension',
+                     action='append',
+                     dest='extension_paths',
+                     metavar='str',
+                     help='path to browser extension to install (webdriver).')
     group._addoption('--chromeopts',
                      action='store',
                      dest='chrome_options',
