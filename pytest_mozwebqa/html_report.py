@@ -10,10 +10,11 @@ import datetime
 import os
 import py
 import time
+import sys
+import shutil
 
 from py.xml import html
 from py.xml import raw
-from shutil import copyfile
 
 import sauce_labs
 
@@ -128,16 +129,15 @@ class HTMLReport(object):
             html.td(links_html, class_='col-links'),
             html.td(additional_html, class_='debug')], class_=result.lower() + ' results-table-row'))
 
-    def _data_file(self, fname):
-        return os.path.join(os.path.split(__file__)[0], fname)
-
     def _make_report_dir(self):
         logfile_dirname = os.path.dirname(self.logfile)
         if logfile_dirname and not os.path.exists(logfile_dirname):
             os.makedirs(logfile_dirname)
-        #copy across the static resources
+        # copy across the static resources
         for file in self.resources:
-            copyfile(self._data_file('resources/' + file), os.path.abspath(os.path.join(logfile_dirname, file)))
+            shutil.copyfile(
+                os.path.join(os.path.dirname(__file__), 'resources', file),
+                os.path.abspath(os.path.join(logfile_dirname, file)))
         return logfile_dirname
 
     def append_pass(self, report):
